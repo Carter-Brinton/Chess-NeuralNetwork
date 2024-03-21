@@ -1,27 +1,32 @@
-# main.py
+import pygame
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
-from game_logic.board import ChessboardWidget
-from PyQt6.QtCore import Qt
+import os
+from game_logic.board import Board  # Ensure your import matches the actual file structure
+from constants.constants import *
 
-class ChessBoard(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Chess Board")
-        self.setGeometry(100, 100, 500, 500)
-        self.init_ui()
+pygame.init()
 
-    def init_ui(self):
-        self.central_widget = QWidget()
-        self.setCentralWidget(self.central_widget)
-        main_layout = QVBoxLayout(self.central_widget)
-        main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+def main():
+    screen = pygame.display.set_mode((SCREEN_WIDTH, BOARD_HEIGHT))
+    game_board = Board()
 
-        chessboard_widget = ChessboardWidget()
-        main_layout.addWidget(chessboard_widget)
+    selected_piece = None
+    selected_pos = None
+    valid_moves = []
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                if game_board.handle_mouse_click(mouse_x, mouse_y):  # This method now manages clicks
+                    selected_piece, selected_pos, valid_moves = game_board.get_selected_state()
+
+        game_board.draw(screen)
+        pygame.display.flip()
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    chess_board = ChessBoard()
-    chess_board.show()
-    sys.exit(app.exec())
+    main()

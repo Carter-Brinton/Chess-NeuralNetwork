@@ -2,3 +2,5 @@
 src/game_logic/__pycache__/
 
 .DS_Store
+
+src/constants/__pycache__/
