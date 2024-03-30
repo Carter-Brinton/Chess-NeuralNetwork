@@ -40,40 +40,72 @@ class Board:
             self.board[6][i] = Pawn('white', self.images["white-pawn"])
 
     def handle_mouse_click(self, x, y):
-        grid_x, grid_y = x // SQUARE_SIZE, y // SQUARE_SIZE  # Convert mouse coordinates to board grid
+        # Adjust mouse coordinates to account for the margins and borders
+        adjusted_x = x - BOARD_MARGIN - BOARD_BORDER_SIZE
+        adjusted_y = y - BOARD_MARGIN - BOARD_BORDER_SIZE
 
-        # Deselect piece if clicked outside the board or on the same piece
-        if grid_x >= BOARD_SIZE or grid_y >= BOARD_SIZE or (self.selected_pos == (grid_x, grid_y)):
+        # Ensure the click is within the bounds of the board
+        if adjusted_x < 0 or adjusted_y < 0 or adjusted_x >= BOARD_WIDTH or adjusted_y >= BOARD_HEIGHT:
             self.selected_piece = None
             self.selected_pos = None
             self.valid_moves = []
             return False
 
-        # If a piece is already selected
-        if self.selected_piece:
-            # Move the piece if a valid destination is selected
-            if (grid_x, grid_y) in self.valid_moves:
-                self.board[self.selected_pos[1]][self.selected_pos[0]] = None
-                self.board[grid_y][grid_x] = self.selected_piece
-                self.switch_turn()  # Switch turns after a successful move
-                self.selected_piece = None
-                self.selected_pos = None
-                self.valid_moves = []
-                return True
+        # Convert adjusted mouse coordinates to board grid positions
+        grid_x, grid_y = adjusted_x // SQUARE_SIZE, adjusted_y // SQUARE_SIZE
+        
+        # If a piece is already selected and the click is within the valid moves
+        if self.selected_piece and (grid_x, grid_y) in self.valid_moves:
+            if isinstance(self.selected_piece, King) and abs(self.selected_pos[0] - grid_x) == 2:
+                # Castling move detected, handle rook movement
+                self.perform_castling(grid_x, grid_y)
             else:
-                # Deselect if an invalid move was attempted
-                self.selected_piece = None
-                self.selected_pos = None
-                self.valid_moves = []
-                return False
+                # Regular move
+                self.move_piece(grid_x, grid_y)
+            self.switch_turn()  # Switch turns after a successful move
+            self.deselect_piece()
+            return True
+        elif self.board[grid_y][grid_x] and self.board[grid_y][grid_x].color == self.current_turn:
+            # Select a different piece if it's a valid choice
+            self.selected_piece = self.board[grid_y][grid_x]
+            self.selected_pos = (grid_x, grid_y)
+            self.valid_moves = self.selected_piece.get_moves(grid_x, grid_y, self.board)
+            return True
         else:
-            # Select a piece if none is selected and it matches the current turn
-            if self.board[grid_y][grid_x] and self.board[grid_y][grid_x].color == self.current_turn:
-                self.selected_piece = self.board[grid_y][grid_x]
-                self.selected_pos = (grid_x, grid_y)
-                self.valid_moves = self.selected_piece.get_moves(grid_x, grid_y, self.board)
-                return True
+            # Deselect if clicked on an empty square or an invalid move
+            return self.select_piece(grid_x, grid_y)
+
+    def move_piece(self, grid_x, grid_y):
+        # Move the selected piece to the new position
+        self.board[self.selected_pos[1]][self.selected_pos[0]] = None
+        self.board[grid_y][grid_x] = self.selected_piece
+        self.selected_piece.has_moved = True  # Update has_moved for the piece
+
+    def perform_castling(self, grid_x, grid_y):
+        # Calculate the rook's initial and final positions based on the king's move
+        rook_x_initial = 0 if grid_x == 2 else 7
+        rook_x_final = 3 if grid_x == 2 else 5
+        rook = self.board[grid_y][rook_x_initial]
+        # Move the rook
+        self.board[grid_y][rook_x_initial] = None
+        self.board[grid_y][rook_x_final] = rook
+        rook.has_moved = True
+        # Move the king
+        self.move_piece(grid_x, grid_y)
+
+    def deselect_piece(self):
+        self.selected_piece = None
+        self.selected_pos = None
+        self.valid_moves = []
+
+    def select_piece(self, grid_x, grid_y):
+        if self.board[grid_y][grid_x] and self.board[grid_y][grid_x].color == self.current_turn:
+            self.selected_piece = self.board[grid_y][grid_x]
+            self.selected_pos = (grid_x, grid_y)
+            self.valid_moves = self.selected_piece.get_moves(grid_x, grid_y, self.board)
+            return True
         return False
+
 
     def get_selected_state(self):
         return self.selected_piece, self.selected_pos, self.valid_moves
@@ -83,7 +115,19 @@ class Board:
         self.current_turn = 'white'
 
     def draw(self, screen):
+        # Fill the background
         screen.fill(WHITE)
+        
+        # Adjust the starting point and dimensions for the margin
+        board_start_x = BOARD_MARGIN + BOARD_BORDER_SIZE
+        board_start_y = BOARD_MARGIN + BOARD_BORDER_SIZE
+        board_width_with_margin = BOARD_WIDTH + 2 * BOARD_BORDER_SIZE
+        board_height_with_margin = BOARD_HEIGHT + 2 * BOARD_BORDER_SIZE
+        
+        # Draw the board border with margin accounted for
+        pygame.draw.rect(screen, BLACK, (BOARD_MARGIN, BOARD_MARGIN, board_width_with_margin, board_height_with_margin))
+
+        # Draw the chess squares
         for y, row in enumerate(self.board):
             for x, piece in enumerate(row):
                 color = WHITE if (x + y) % 2 == 0 else GREY
