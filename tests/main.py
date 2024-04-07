@@ -39,7 +39,6 @@ class ChessGame:
         self.offset_x, self.offset_y = OFFSET_X, OFFSET_Y
         self.selected_piece = None
         self.legal_moves = list(self.board.legal_moves)
-        self.player_color = chess.WHITE 
         self.undone_moves = []
         self.scroll_offset = 0
         self.player_color = random.choice([chess.WHITE, chess.BLACK])

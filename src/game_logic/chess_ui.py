@@ -1,11 +1,14 @@
 # chess_ui.py
+import chess
 import pygame
 from constants.constants import *
 
 class ChessUI:
-    def __init__(self, screen, game_board):
+    def __init__(self, screen, my_chess_board, board):
         self.screen = screen
-        self.game_board = game_board
+        self.my_chess_board = my_chess_board
+        self.board = board
+        self.scroll_offset = 0  
 
     def draw_start_game_popup(self):
         overlay_color = (0, 0, 0, 128)
@@ -106,4 +109,3 @@ class ChessUI:
         # Adjust scroll offset for next frame
         max_scroll = max(0, turn_count * move_step - (ui_height - header_y_start - 20))
         self.scroll_offset = max(0, min(self.scroll_offset, max_scroll))
-

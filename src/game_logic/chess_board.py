@@ -3,11 +3,19 @@ import chess
 from constants.constants import *
 
 class ChessBoard:
-    def __init__(self, screen, PIECES):
-        self.board = chess.Board()
+    def __init__(self, screen, PIECES, player_color, offset_x, offset_y, board):
         self.screen = screen
         self.PIECES = PIECES
-        self.player_color = chess.WHITE 
+        self.player_color = player_color
+        self.offset_x = offset_x
+        self.offset_y = offset_y
+        self.board = board
+        self.legal_moves = list(self.board.legal_moves)
+        self.selected_piece = None
+        self.undone_moves = []
+        
+    def update_player_color(self, new_color):
+        self.player_color = new_color
 
     def draw_board(self):
         label_font = pygame.font.Font(None, 24)
@@ -141,9 +149,12 @@ class ChessBoard:
         logical_row = 7 - (y - self.offset_y) // SQUARE_SIZE if self.player_color == chess.WHITE else (y - self.offset_y) // SQUARE_SIZE
         square = chess.square(col, logical_row)
         if square in chess.SQUARES:
-            return self.select_square(square)
+            successful_move = self.select_square(square)
+            if successful_move:
+                # Move was successful, clear any undone moves because we're taking a new path
+                self.undone_moves.clear()
+            return successful_move
         return False
-
 
     def select_square(self, square):
         if square is None:
@@ -173,13 +184,13 @@ class ChessBoard:
             self.legal_moves = [move for move in self.board.legal_moves if move.from_square == self.selected_piece]
 
     def move_back(self):
-        if len(self.board.move_stack) > 0:  # Ensure there are moves to undo
-            move = self.board.pop()  # Undo the last move
-            self.undone_moves.append(move)  # Store it to allow redo
-            self.update_legal_moves()  # Update legal moves list
+        if len(self.board.move_stack) > 0:
+            move = self.board.pop()
+            self.undone_moves.append(move)
+            self.update_legal_moves()
 
     def move_forward(self):
-        if self.undone_moves:  # Ensure there are moves to redo
-            move = self.undone_moves.pop()  # Get the last undone move
-            self.board.push(move)  # Redo the move
-            self.update_legal_moves()  # Update legal moves list
+        if self.undone_moves:
+            move = self.undone_moves.pop()
+            self.board.push(move)
+            self.update_legal_moves()
