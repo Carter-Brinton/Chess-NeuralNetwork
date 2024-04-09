@@ -1,6 +1,9 @@
 
+src/constants/__pycache__/
 src/game_logic/__pycache__/
+src/neural_network/__pycache__/
+src/player_logic/__pycache__/
+src/utils/__pycache__/
+tests/__pycache__/
 
 .DS_Store
-
-src/constants/__pycache__/

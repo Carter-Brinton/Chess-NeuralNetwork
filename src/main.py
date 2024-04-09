@@ -37,6 +37,12 @@ class ChessGame:
                             self.player_color = chess.BLACK
                             self.show_start_game_popup = False
                             self.my_chess_board.update_player_color(chess.BLACK)
+                    elif self.my_chess_ui.restart_button_rect.collidepoint(event.pos):
+                        self.board.reset()
+                        self.my_chess_board.reset()
+                        self.show_start_game_popup = True
+                    elif self.my_chess_ui.quit_button_rect.collidepoint(event.pos):
+                        running = False
                     elif self.my_chess_board.awaiting_promotion:
                         # Handle promotion piece selection
                         for option_rect, promotion_piece in zip(self.my_chess_ui.promotion_option_buttons, [chess.QUEEN, chess.ROOK, chess.BISHOP, chess.KNIGHT]):
@@ -49,6 +55,11 @@ class ChessGame:
                                     self.my_chess_board.legal_moves = list(self.board.legal_moves)
                                     self.my_chess_board.awaiting_promotion = False
                                     break
+                        if self.my_chess_ui.cancel_promotion_button_rect.collidepoint(event.pos):
+                            self.my_chess_board.awaiting_promotion = False
+                            self.my_chess_board.selected_piece = None
+                            self.my_chess_board.legal_moves = list(self.board.legal_moves)
+                            self.my_chess_board.awaiting_promotion = False
                     else:
                         # Handle regular game interactions
                         pos = pygame.mouse.get_pos()

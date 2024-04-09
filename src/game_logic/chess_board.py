@@ -16,12 +16,28 @@ class ChessBoard:
         self.awaiting_promotion = False
         self.square_to_promote = None
 
-        
     def update_player_color(self, new_color):
         self.player_color = new_color
 
+    def reset(self):
+        self.legal_moves = list(self.board.legal_moves)
+        self.selected_piece = None
+        self.undone_moves = []
+        self.awaiting_promotion = False
+        self.square_to_promote = None
+
     def draw_board(self):
         label_font = pygame.font.Font(None, 24)
+        move_text_font = pygame.font.Font(None, 30) 
+        player_color = 'WHITE' if self.board.turn == chess.WHITE else 'BLACK'
+        move_text = f"Player '{player_color}' to Move"
+        move_text_surface = move_text_font.render(move_text, True, BLACK)
+
+        # Calculate the position to center the text above the board
+        text_x = self.offset_x + (BOARD_SIZE - move_text_surface.get_width()) // 2
+        text_y = self.offset_y - move_text_surface.get_height() - 20  # 20 pixels above the board
+        self.screen.blit(move_text_surface, (text_x, text_y))
+
         border_thickness = 2
         pygame.draw.rect(self.screen, BLACK, (self.offset_x - border_thickness,
                                               self.offset_y - border_thickness,
@@ -95,7 +111,6 @@ class ChessBoard:
                 center_y = draw_to_row * SQUARE_SIZE + SQUARE_SIZE // 2 + self.offset_y
                 pygame.draw.circle(self.screen, PALEGREEN, (center_x, center_y), SQUARE_SIZE // 10)
 
-
     def draw_capture_highlights(self):
         for move in self.legal_moves:
             if self.board.is_capture(move):
@@ -154,7 +169,6 @@ class ChessBoard:
         if square in chess.SQUARES:
             successful_move = self.select_square_to_move_to(square)
             if successful_move:
-                # Move was successful, clear any undone moves because we're taking a new path
                 self.undone_moves.clear()
             return successful_move
         return False
@@ -162,33 +176,37 @@ class ChessBoard:
     def select_square_to_move_to(self, square):
         if square is None:
             return False
-        self.square_to_promote = square
 
-        if self.selected_piece is not None:
-            moving_piece = self.board.piece_at(self.selected_piece)
-            if moving_piece and moving_piece.piece_type == chess.PAWN:
-                promotion_rank = 7 if moving_piece.color == chess.WHITE else 0
-                if chess.square_rank(square) == promotion_rank:
-                    # Potentially a promotion move; defer move execution for promotion piece selection
-                    self.awaiting_promotion = True
-                    return False  # Don't execute the move yet
-            # Handle regular move execution
+        clicked_piece = self.board.piece_at(square)
+        if self.selected_piece is not None and self.selected_piece != square:
             move = chess.Move(self.selected_piece, square)
+            # Check if the move is a promotion
+            if self.board.piece_at(self.selected_piece).piece_type == chess.PAWN:
+                promotion_rank = 7 if self.board.piece_at(self.selected_piece).color == chess.WHITE else 0
+                if chess.square_rank(square) == promotion_rank:
+                    self.awaiting_promotion = True
+                    self.square_to_promote = square
+                    return False  # Awaiting promotion selection
+
             if move in self.legal_moves and (not self.board.is_check() or self.board.is_legal(move)):
                 self.board.push(move)
                 self.selected_piece = None
                 self.legal_moves = list(self.board.legal_moves)
+                self.awaiting_promotion = False
                 return True
-
-        elif self.board.piece_at(square) and self.board.piece_at(square).color == self.board.turn:
+            elif clicked_piece and clicked_piece.color == self.board.turn:
+                self.selected_piece = square
+                self.update_legal_moves()
+                return False  # Return False to indicate no move was made, but selection has changed
+        elif clicked_piece and clicked_piece.color == self.board.turn:
             self.selected_piece = square
             self.update_legal_moves()
-            return True
+            return False 
 
         self.selected_piece = None
         self.legal_moves = []
+        self.awaiting_promotion = False
         return False
-
 
     def update_legal_moves(self):
         if self.board.is_check():
