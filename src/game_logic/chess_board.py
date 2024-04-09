@@ -13,6 +13,9 @@ class ChessBoard:
         self.legal_moves = list(self.board.legal_moves)
         self.selected_piece = None
         self.undone_moves = []
+        self.awaiting_promotion = False
+        self.square_to_promote = None
+
         
     def update_player_color(self, new_color):
         self.player_color = new_color
@@ -137,7 +140,7 @@ class ChessBoard:
                         draw_castling_row = 7 - castling_row
 
                     pygame.draw.rect(self.screen, GREEN, (draw_castling_col * SQUARE_SIZE + self.offset_x, draw_castling_row * SQUARE_SIZE + self.offset_y, SQUARE_SIZE, SQUARE_SIZE), 3)
-
+        
     def handle_mouse_click(self, pos):
         x, y = pos
         # Adjust column based on player color, to correctly reflect clicks for black players.
@@ -149,26 +152,35 @@ class ChessBoard:
         logical_row = 7 - (y - self.offset_y) // SQUARE_SIZE if self.player_color == chess.WHITE else (y - self.offset_y) // SQUARE_SIZE
         square = chess.square(col, logical_row)
         if square in chess.SQUARES:
-            successful_move = self.select_square(square)
+            successful_move = self.select_square_to_move_to(square)
             if successful_move:
                 # Move was successful, clear any undone moves because we're taking a new path
                 self.undone_moves.clear()
             return successful_move
         return False
 
-    def select_square(self, square):
+    def select_square_to_move_to(self, square):
         if square is None:
             return False
+        self.square_to_promote = square
 
-        clicked_piece = self.board.piece_at(square)
         if self.selected_piece is not None:
+            moving_piece = self.board.piece_at(self.selected_piece)
+            if moving_piece and moving_piece.piece_type == chess.PAWN:
+                promotion_rank = 7 if moving_piece.color == chess.WHITE else 0
+                if chess.square_rank(square) == promotion_rank:
+                    # Potentially a promotion move; defer move execution for promotion piece selection
+                    self.awaiting_promotion = True
+                    return False  # Don't execute the move yet
+            # Handle regular move execution
             move = chess.Move(self.selected_piece, square)
             if move in self.legal_moves and (not self.board.is_check() or self.board.is_legal(move)):
                 self.board.push(move)
                 self.selected_piece = None
                 self.legal_moves = list(self.board.legal_moves)
                 return True
-        elif clicked_piece and clicked_piece.color == self.board.turn:
+
+        elif self.board.piece_at(square) and self.board.piece_at(square).color == self.board.turn:
             self.selected_piece = square
             self.update_legal_moves()
             return True
@@ -176,6 +188,7 @@ class ChessBoard:
         self.selected_piece = None
         self.legal_moves = []
         return False
+
 
     def update_legal_moves(self):
         if self.board.is_check():

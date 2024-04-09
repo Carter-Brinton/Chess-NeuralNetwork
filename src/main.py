@@ -26,18 +26,33 @@ class ChessGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                elif event.type == pygame.MOUSEBUTTONDOWN and self.show_start_game_popup:
-                    if self.my_chess_ui.white_button_rect.collidepoint(event.pos):
-                        self.player_color = chess.WHITE
-                        self.show_start_game_popup = False
-                        self.my_chess_board.update_player_color(chess.WHITE)
-                    elif self.my_chess_ui.black_button_rect.collidepoint(event.pos):
-                        self.player_color = chess.BLACK
-                        self.show_start_game_popup = False
-                        self.my_chess_board.update_player_color(chess.BLACK) 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    pos = pygame.mouse.get_pos()
-                    self.my_chess_board.handle_mouse_click(pos)
+                    if self.show_start_game_popup:
+                        # Handle start game popup interactions
+                        if self.my_chess_ui.white_button_rect.collidepoint(event.pos):
+                            self.player_color = chess.WHITE
+                            self.show_start_game_popup = False
+                            self.my_chess_board.update_player_color(chess.WHITE)
+                        elif self.my_chess_ui.black_button_rect.collidepoint(event.pos):
+                            self.player_color = chess.BLACK
+                            self.show_start_game_popup = False
+                            self.my_chess_board.update_player_color(chess.BLACK)
+                    elif self.my_chess_board.awaiting_promotion:
+                        # Handle promotion piece selection
+                        for option_rect, promotion_piece in zip(self.my_chess_ui.promotion_option_buttons, [chess.QUEEN, chess.ROOK, chess.BISHOP, chess.KNIGHT]):
+                            if option_rect.collidepoint(event.pos):
+                                move = chess.Move(self.my_chess_board.selected_piece, self.my_chess_board.square_to_promote, promotion=promotion_piece)
+                                if move in self.my_chess_board.legal_moves:
+                                    self.board.push(move)
+                                    self.my_chess_board.awaiting_promotion = False
+                                    self.my_chess_board.selected_piece = None
+                                    self.my_chess_board.legal_moves = list(self.board.legal_moves)
+                                    self.my_chess_board.awaiting_promotion = False
+                                    break
+                    else:
+                        # Handle regular game interactions
+                        pos = pygame.mouse.get_pos()
+                        self.my_chess_board.handle_mouse_click(pos)
                     if self.my_chess_ui.back_button_rect.collidepoint(event.pos):
                         self.my_chess_board.move_back()
                     elif self.my_chess_ui.forward_button_rect.collidepoint(event.pos):
@@ -48,12 +63,17 @@ class ChessGame:
                     elif event.key == pygame.K_UP:
                         self.my_chess_ui.scroll_offset -= 20  # Scroll up
 
+            # Redraw the game state
             self.screen.fill(WHITE)
-            self.my_chess_board.draw_board()  # Call draw_board on the ChessBoard instance
-            self.my_chess_board.draw_pieces()  # Similarly, ensure draw_pieces is called on the ChessBoard instance
-            self.my_chess_ui.draw_ui()  # Assuming draw_ui is a method of the ChessUI class
+            self.my_chess_board.draw_board()
+            self.my_chess_board.draw_pieces()
+            self.my_chess_ui.draw_move_tracking_ui()
+
+            if self.my_chess_board.awaiting_promotion:
+                self.my_chess_ui.draw_promotion_ui(None, self.board.piece_at(self.my_chess_board.selected_piece).color)
+
             if self.show_start_game_popup:
-                self.my_chess_ui.draw_start_game_popup()  # Assuming this is intended to be part of the UI
+                self.my_chess_ui.draw_start_game_popup()
 
             pygame.display.flip()
 

@@ -42,7 +42,39 @@ class ChessUI:
         self.white_button_rect = white_button_rect
         self.black_button_rect = black_button_rect
 
-    def draw_ui_buttons(self, ui_x_start, ui_y_start):
+    def draw_promotion_ui(self, pawn_square, player_color):
+        # Calculate popup position and size
+        popup_width = 300
+        popup_height = 100
+        popup_x = (WINDOW_WIDTH - popup_width) // 2
+        popup_y = (WINDOW_HEIGHT - popup_height) // 2
+
+        # Draw the popup background
+        pygame.draw.rect(self.screen, GREY, (popup_x, popup_y, popup_width, popup_height))
+
+        # Load images for each promotion option
+        promotion_options = ['Queen', 'Rook', 'Bishop', 'Knight']
+        option_buttons = []
+        for i, option in enumerate(promotion_options):
+            # Adjust these values as needed to properly layout your piece options
+            option_x = popup_x + (i * (popup_width // len(promotion_options)))
+            option_y = popup_y
+            option_width = popup_width // len(promotion_options)
+            option_height = popup_height
+
+            # Draw option button (consider drawing a piece image here)
+            option_rect = pygame.Rect(option_x, option_y, option_width, option_height)
+            pygame.draw.rect(self.screen, WHITE, option_rect)
+            piece_image = self.my_chess_board.PIECES[(('W' if player_color == chess.WHITE else 'B') + option)]
+            self.screen.blit(piece_image, (option_x + option_width // 4, option_y + option_height // 4))
+
+            option_buttons.append(option_rect)
+            self.promotion_option_buttons = option_buttons
+
+        return option_buttons
+
+
+    def draw_forward_and_back_ui(self, ui_x_start, ui_y_start):
         back_button_color = pygame.Color("grey")
         forward_button_color = pygame.Color("grey")
         self.back_button_rect = pygame.Rect(ui_x_start + 25, ui_y_start - 40, 80, 30)
@@ -59,7 +91,7 @@ class ChessUI:
         self.screen.blit(forward_text, (self.forward_button_rect.x + 12, self.forward_button_rect.y + 8))
 
 
-    def draw_ui(self):
+    def draw_move_tracking_ui(self):
         ui_background_color = pygame.Color("lightblue")
         ui_x_start = OFFSET_X + BOARD_SIZE + 15
         ui_y_start = 58
@@ -69,7 +101,7 @@ class ChessUI:
         # Draw UI background with adjusted dimensions
         pygame.draw.rect(self.screen, ui_background_color, (ui_x_start, ui_y_start, ui_width, ui_height))
 
-        self.draw_ui_buttons(ui_x_start, ui_y_start)
+        self.draw_forward_and_back_ui(ui_x_start, ui_y_start)
 
         # Set up the table headers
         font = pygame.font.Font(None, 25)

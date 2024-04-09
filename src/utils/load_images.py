@@ -8,5 +8,5 @@ def load_images():
     for piece in pieces:
         for color in ['White', 'Black']:
             key = color[0].upper() + piece
-            images[key] = pygame.transform.scale(pygame.image.load(f"./assets/images/chess_pieces/{color.lower()}-{piece.lower()}.png"), (SQUARE_SIZE, SQUARE_SIZE))
+            images[key] = pygame.transform.scale(pygame.image.load(f"./src/assets/images/chess_pieces/{color.lower()}-{piece.lower()}.png"), (SQUARE_SIZE, SQUARE_SIZE))
     return images
