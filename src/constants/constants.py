@@ -1,6 +1,5 @@
 # constants.py
 import pygame
-
 pygame.init()
 
 WINDOW_WIDTH = 1200
@@ -13,7 +12,21 @@ OFFSET_Y = (WINDOW_HEIGHT - BOARD_SIZE) // 2
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREY = (200, 200, 200)
-BLUE = pygame.Color("blue")
-GREEN = pygame.Color("green")
-PALEGREEN = pygame.Color("palegreen")
-RED = pygame.Color("red")
+LIGHTGREY = (128, 128, 128)
+BLUE = (0, 0, 255)
+PALEBLUE = (172, 216, 230)
+GREEN = (0, 128, 0)
+PALEGREEN = (152, 251, 152)
+RED = (255, 0, 0)
+PALERED = (255, 182, 193)
+YELLOW = (255, 255, 0)
+ORANGE = (255, 165, 0)
+PURPLE = (128, 0, 128)
+BROWN = (165, 42, 42)
+CYAN = (0, 255, 255)
+MAGENTA = (255, 0, 255)
+LIME = (0, 255, 0)
+NAVY = (0, 0, 128)
+TEAL = (0, 128, 128)
+OLIVE = (128, 128, 0)
+
