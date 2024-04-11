@@ -23,7 +23,7 @@ class ChessUI:
         self.ChessMoveTrackingUI = ChessMoveTrackingUI(self)
         self.ChessPromotionUI = ChessPromotionUI(self)
         self.ChessRestartQuitUI = ChessRestartQuitUI(self)
-        self.chessSelectColorUI = ChessSelectColorUI(self)
+        self.ChessSelectColorUI = ChessSelectColorUI(self)
         self.ChessStartGameUI = ChessStartGameUI(self)
         self.ChessTrainAIUI = ChessTrainAIUI(self)
         self.ChessPlayAIUI = ChessPlayAIUI(self)
@@ -52,7 +52,7 @@ class ChessUI:
 
     # ChessSelectColorUI methods
     def draw_select_starting_color_ui(self):
-        self.chessSelectColorUI.draw_select_starting_color_ui()
+        self.ChessSelectColorUI.draw_select_starting_color_ui()
 
     # ChessStartGameUI methods
     def draw_start_game_popup(self):
@@ -62,4 +62,7 @@ class ChessUI:
     def draw_train_ai_popup(self):
         self.ChessTrainAIUI.draw_train_ai_popup()
 
+    # ChessPlayAIUI methods
+    def draw_play_ai_popup(self):
+        self.ChessPlayAIUI.draw_play_ai_popup()
     

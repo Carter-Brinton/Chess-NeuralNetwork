@@ -37,7 +37,7 @@ class ChessStartGameUI:
         # Render text surfaces
         train_text = font.render("Train AI", True, BLACK)
         ai_text = font.render("Play against AI", True, BLACK)
-        two_player_text = font.render("Play 2 Player", True, BLACK)
+        two_player_text = font.render("Player vs Player", True, BLACK)
 
         # Calculate text position for center alignment
         def center_text(rect, text_surface):

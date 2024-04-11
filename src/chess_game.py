@@ -1,4 +1,6 @@
 # chess_game.py
+import threading
+import time
 from constants.constants import *
 from game_logic.chess_board import ChessBoard
 from game_ui.chess_ui import ChessUI
@@ -6,7 +8,7 @@ from utils.load_images import load_images
 import chess
 import random
 import numpy as np
-from neural_network.chess_environment import ChessEnvironment
+from neural_network.chess_training_environment import ChessTrainingEnvironment
 from neural_network.dqn_agent import DQNAgent
 
 class ChessGame:
@@ -18,33 +20,15 @@ class ChessGame:
             self.player_color = random.choice([chess.WHITE, chess.BLACK])
             self.my_chess_board = ChessBoard(self.screen, self.PIECES, self.player_color, self.offset_x, self.offset_y, self.board)
             self.my_chess_ui = ChessUI(self.screen, self.my_chess_board, self.board)
+            self.training_environment = ChessTrainingEnvironment(self.board, self.my_chess_board)
+            self.game_started = False
             self.current_ui_state = None
+            self.current_game_state = None
             self.show_start_game_popup = True
             self.show_select_train_ai_popup = False
             self.show_select_play_ai_popup = False
             self.show_select_starting_color_popup = False
-
-    def train_ai(episodes=1000):
-        env = ChessEnvironment()
-        state_size = env.state_size  # You need to define this based on your environment
-        action_size = env.action_size  # Likewise, define based on your environment
-        agent = DQNAgent(state_size, action_size)
         
-        for e in range(episodes):
-            state = env.reset()
-            state = np.reshape(state, [1, state_size])
-            for time in range(500):  # Maximum steps per episode
-                action = agent.act(state)
-                next_state, reward, done = env.step(action)
-                next_state = np.reshape(next_state, [1, state_size])
-                agent.remember(state, action, reward, next_state, done)
-                state = next_state
-                if done:
-                    print(f"Episode: {e+1}/{episodes}, score: {time}, e: {agent.epsilon:.2}")
-                    break
-                if len(agent.memory) > 32:
-                    agent.replay(32)
-    
     # In ChessGame class
     def handle_start_game_clicks(self, pos):
         if self.show_start_game_popup:
@@ -62,7 +46,7 @@ class ChessGame:
             self.show_start_game_popup = False
             self.current_ui_state = 'train_ai'
         elif self.my_chess_ui.ChessStartGameUI.start_ai_button_rect.collidepoint(pos):
-            self.show_select_starting_color_popup = True
+            self.show_select_play_ai_popup = True
             self.show_start_game_popup = False
             self.current_ui_state = 'play_ai'
         elif self.my_chess_ui.ChessStartGameUI.start_two_player_button_rect.collidepoint(pos):
@@ -74,39 +58,59 @@ class ChessGame:
     def handle_select_train_ai_clicks(self, pos):
         if self.current_ui_state == 'train_ai':
             self.my_chess_ui.ChessTrainAIUI.handle_clicks(pos)
+            if self.my_chess_ui.ChessTrainAIUI.start_training_button_rect.collidepoint(pos):
+                # Start the Trianing Method
+                self.handle_game_started(None, False, None, 'training_ai')
+            elif self.my_chess_ui.ChessTrainAIUI.cancel_training_button_rect.collidepoint(pos):
+                # Cancel
+                self.show_select_train_ai_popup = False
+                self.current_ui_state = None
+                self.show_start_game_popup = True
 
     def handle_select_play_ai_clicks(self, pos):
-        self.my_chess_ui.ChessPlayAIUI.handle_ai_level_click(pos)
-        if self.my_chess_ui.chessSelectColorUI.white_button_rect.collidepoint(pos):
-            self.player_color = chess.WHITE
-            self.show_select_play_ai_popup = False
-            self.current_ui_state = None
-        elif self.my_chess_ui.chessSelectColorUI.black_button_rect.collidepoint(pos):
-            self.player_color = chess.BLACK
-            self.show_select_play_ai_popup = False
-            self.current_ui_state = None
-        elif self.my_chess_ui.chessSelectColorUI.random_button_rect.collidepoint(pos):
-            self.show_select_play_ai_popup = False
-            self.current_ui_state = None
-            self.my_chess_board.update_player_color(random.choice([chess.WHITE, chess.BLACK]))
+        if self.current_ui_state == 'play_ai':
+            self.my_chess_ui.ChessPlayAIUI.handle_clicks(pos)
+            self.my_chess_board.playing_against_ai = True
+            if self.my_chess_ui.ChessPlayAIUI.white_button_rect.collidepoint(pos):
+                self.player_color = chess.WHITE
+                self.handle_game_started(self.player_color, False, None, 'ai_vs_player')
+            elif self.my_chess_ui.ChessPlayAIUI.black_button_rect.collidepoint(pos):
+                self.player_color = chess.BLACK
+                self.handle_game_started(self.player_color, False, None, 'ai_vs_player')
+            elif self.my_chess_ui.ChessPlayAIUI.random_button_rect.collidepoint(pos):
+                self.player_color = random.choice([chess.WHITE, chess.BLACK])
+                self.handle_game_started(self.player_color, False, None, 'ai_vs_player')
 
     def handle_select_starting_color_clicks(self, pos):
-        if self.my_chess_ui.chessSelectColorUI.white_button_rect.collidepoint(pos):
-            self.player_color = chess.WHITE
-            self.show_select_starting_color_popup = False
-            self.current_ui_state = None
-            self.my_chess_board.update_player_color(chess.WHITE)
-        elif self.my_chess_ui.chessSelectColorUI.black_button_rect.collidepoint(pos):
-            self.player_color = chess.BLACK
-            self.show_select_starting_color_popup = False
-            self.current_ui_state = None
-            self.my_chess_board.update_player_color(chess.BLACK)
-        elif self.my_chess_ui.chessSelectColorUI.random_button_rect.collidepoint(pos):
-            self.show_select_starting_color_popup = False
-            self.current_ui_state = None
-            self.my_chess_board.update_player_color(random.choice([chess.WHITE, chess.BLACK]))
+        if self.current_ui_state == 'two_player':
+            if self.my_chess_ui.ChessSelectColorUI.white_button_rect.collidepoint(pos):
+                self.player_color = chess.WHITE
+                self.handle_game_started(self.player_color, False, None, 'player_vs_player')
+            elif self.my_chess_ui.ChessSelectColorUI.black_button_rect.collidepoint(pos):
+                self.player_color = chess.BLACK
+                self.handle_game_started(self.player_color, False, None, 'player_vs_player')
+            elif self.my_chess_ui.ChessSelectColorUI.random_button_rect.collidepoint(pos):
+                self.player_color = random.choice([chess.WHITE, chess.BLACK])
+                self.handle_game_started(self.player_color, False, None, 'player_vs_player')
 
+    def handle_game_started(self, player_color, set_popup_state, set_ui_state, set_game_state):
+        if(self.current_ui_state == 'play_ai'):
+            self.my_chess_board.update_player_color(player_color)
+            self.play_against_ai_thread = threading.Thread(target=self.training_environment.start_playing_against_ai)
+            self.play_against_ai_thread.start()
+            self.show_select_play_ai_popup = set_popup_state
+        elif(self.current_ui_state == 'train_ai'):
+            self.training_thread = threading.Thread(target=self.training_environment.start_training_ai)
+            self.training_thread.start()
+            self.show_select_train_ai_popup = set_popup_state
+        elif(self.current_ui_state == 'two_player'):
+            self.show_select_starting_color_popup = set_popup_state
+            self.my_chess_board.update_player_color(player_color)
+        self.current_ui_state = set_ui_state
+        self.current_game_state = set_game_state
 
+            
+    
     def run(self):
         running = True
         while running:
@@ -118,8 +122,10 @@ class ChessGame:
                     if self.my_chess_ui.ChessRestartQuitUI.restart_button_rect.collidepoint(event.pos) and self.current_ui_state is None:
                         self.board.reset()
                         self.my_chess_board.reset()
+                        self.training_environment.stop_ai = True
                         self.show_start_game_popup = True
                     elif self.my_chess_ui.ChessRestartQuitUI.quit_button_rect.collidepoint(event.pos) and self.current_ui_state is None:
+                        self.training_environment.stop_ai = True
                         running = False
                     elif self.my_chess_board.awaiting_promotion:
                         # Handle promotion piece selection
@@ -140,7 +146,7 @@ class ChessGame:
                             self.my_chess_board.legal_moves = list(self.board.legal_moves)
                             self.my_chess_board.awaiting_promotion = False
                             self.current_ui_state = None
-                    elif self.current_ui_state is None:
+                    elif self.current_ui_state is None and self.current_ui_state != 'train_ai' and self.current_game_state != 'training_ai':
                         # Handle regular game interactions
                         pos = pygame.mouse.get_pos()
                         self.my_chess_board.handle_mouse_click(pos)
@@ -153,6 +159,14 @@ class ChessGame:
                         self.my_chess_ui.scroll_offset += 20  # Scroll down
                     elif event.key == pygame.K_UP:
                         self.my_chess_ui.scroll_offset -= 20  # Scroll up
+
+            if self.my_chess_board.draw_ai_moves:
+                self.screen.fill(WHITE)
+                self.my_chess_board.draw_board()
+                self.my_chess_board.draw_pieces()
+                self.my_chess_ui.draw_move_tracking_ui()
+                pygame.display.flip()
+                self.my_chess_board.draw_ai_moves = False
 
             # Redraw the game state
             self.screen.fill(WHITE)
@@ -170,6 +184,9 @@ class ChessGame:
 
             if self.show_select_train_ai_popup:
                 self.my_chess_ui.draw_train_ai_popup()
+            
+            if self.show_select_play_ai_popup:
+                self.my_chess_ui.draw_play_ai_popup()
 
             if self.show_select_starting_color_popup:
                 self.my_chess_ui.draw_select_starting_color_ui()

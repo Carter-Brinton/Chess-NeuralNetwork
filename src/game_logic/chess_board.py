@@ -1,6 +1,7 @@
 # chess_board.py
 import chess
 from constants.constants import *
+import time
 
 class ChessBoard:
     def __init__(self, screen, PIECES, player_color, offset_x, offset_y, board):
@@ -15,9 +16,17 @@ class ChessBoard:
         self.undone_moves = []
         self.awaiting_promotion = False
         self.square_to_promote = None
+        self.playing_against_ai = False
+        self.ai_color = None
+        self.is_ai_turn = False
+        self.draw_ai_moves = False
 
-    def update_player_color(self, new_color):
-        self.player_color = new_color
+    def update_player_color(self, player_color):
+        self.player_color = player_color
+        if(self.playing_against_ai):
+            self.ai_color = chess.WHITE if self.player_color == chess.BLACK else chess.BLACK
+            if(self.ai_color == chess.WHITE):
+                self.is_ai_turn = True
 
     def reset(self):
         self.legal_moves = list(self.board.legal_moves)
@@ -25,6 +34,27 @@ class ChessBoard:
         self.undone_moves = []
         self.awaiting_promotion = False
         self.square_to_promote = None
+            
+    def make_ai_vs_ai_move(self, move_uci):
+        move = chess.Move.from_uci(move_uci)
+        if move in self.board.legal_moves:
+            self.board.push(move)
+        else:
+            # print("AI attempted an illegal move:", move_uci)
+            pass
+        self.draw_ai_moves = True
+        time.sleep(.1)
+
+    def make_ai_vs_player_move(self, move_uci):
+        move = chess.Move.from_uci(move_uci)
+        if move in self.board.legal_moves:
+            self.board.push(move)
+        else:
+            # print("AI attempted an illegal move:", move_uci)
+            pass
+        self.is_ai_turn = False
+        self.draw_ai_moves = True
+        time.sleep(.1)
 
     def draw_board(self):
         label_font = pygame.font.Font(None, 24)
@@ -157,6 +187,9 @@ class ChessBoard:
                     pygame.draw.rect(self.screen, GREEN, (draw_castling_col * SQUARE_SIZE + self.offset_x, draw_castling_row * SQUARE_SIZE + self.offset_y, SQUARE_SIZE, SQUARE_SIZE), 3)
         
     def handle_mouse_click(self, pos):
+        if self.is_ai_turn:
+            return False
+    
         x, y = pos
         # Adjust column based on player color, to correctly reflect clicks for black players.
         if self.player_color == chess.BLACK:
@@ -169,6 +202,8 @@ class ChessBoard:
         if square in chess.SQUARES:
             successful_move = self.select_square_to_move_to(square)
             if successful_move:
+                if(self.playing_against_ai):
+                    self.is_ai_turn = True
                 self.undone_moves.clear()
             return successful_move
         return False
