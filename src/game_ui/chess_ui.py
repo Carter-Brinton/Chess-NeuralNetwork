@@ -2,6 +2,7 @@
 import chess
 import pygame
 from constants.constants import *
+from game_ui.chess_graph_and_plots_ui import ChessGraphAndPlotsUI
 from game_ui.chess_misc_ui import ChessMiscUI
 from game_ui.chess_move_tracking import ChessMoveTrackingUI
 from game_ui.chess_play_ai_ui import ChessPlayAIUI
@@ -10,6 +11,7 @@ from game_ui.chess_restart_quit_ui import ChessRestartQuitUI
 from game_ui.chess_select_color_ui import ChessSelectColorUI
 from game_ui.chess_start_game_ui import ChessStartGameUI
 from game_ui.chess_train_ai_ui import ChessTrainAIUI
+from game_ui.chess_training_stats_ui import ChessTrainingStatsUI
 
 class ChessUI:
     def __init__(self, screen, my_chess_board, board):
@@ -27,6 +29,8 @@ class ChessUI:
         self.ChessStartGameUI = ChessStartGameUI(self)
         self.ChessTrainAIUI = ChessTrainAIUI(self)
         self.ChessPlayAIUI = ChessPlayAIUI(self)
+        self.ChessGraphAndPlotsUI = ChessGraphAndPlotsUI(self)
+        self.ChessTrainingStatsUI = ChessTrainingStatsUI(self)
 
     # MiscUI methods
     def draw_overlay(self):
@@ -66,3 +70,16 @@ class ChessUI:
     def draw_play_ai_popup(self):
         self.ChessPlayAIUI.draw_play_ai_popup()
     
+    # ChessGraphAndPlotsUI methods
+    def update_graph_and_plots_ui(self, episode_rewards_white, episode_rewards_black, episode_losses, epsilon_values):
+        self.ChessGraphAndPlotsUI.update_graph_and_plots_ui(episode_rewards_white, episode_rewards_black, episode_losses, epsilon_values)
+
+    def visualize_neural_network(self):
+        self.ChessGraphAndPlotsUI.visualize_neural_network()
+    
+    def plot_episode_rewards(self, episode_rewards_white, episode_rewards_black, episode_losses, epsilon_values):
+        self.ChessGraphAndPlotsUI.plot_episode_rewards(episode_rewards_white, episode_rewards_black, episode_losses, epsilon_values)
+
+    # ChessTrainingStatsUI methods
+    def draw_training_stats(self):
+        self.ChessTrainingStatsUI.draw_training_stats()

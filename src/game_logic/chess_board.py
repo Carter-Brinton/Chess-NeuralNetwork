@@ -43,7 +43,7 @@ class ChessBoard:
             # print("AI attempted an illegal move:", move_uci)
             pass
         self.draw_ai_moves = True
-        time.sleep(.1)
+        # time.sleep(.1)
 
     def make_ai_vs_player_move(self, move_uci):
         move = chess.Move.from_uci(move_uci)

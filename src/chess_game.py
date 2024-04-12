@@ -20,7 +20,7 @@ class ChessGame:
             self.player_color = random.choice([chess.WHITE, chess.BLACK])
             self.my_chess_board = ChessBoard(self.screen, self.PIECES, self.player_color, self.offset_x, self.offset_y, self.board)
             self.my_chess_ui = ChessUI(self.screen, self.my_chess_board, self.board)
-            self.training_environment = ChessTrainingEnvironment(self.board, self.my_chess_board)
+            self.training_environment = ChessTrainingEnvironment(self.board, self.my_chess_board, self.my_chess_ui)
             self.game_started = False
             self.current_ui_state = None
             self.current_game_state = None
@@ -159,6 +159,16 @@ class ChessGame:
                         self.my_chess_ui.scroll_offset += 20  # Scroll down
                     elif event.key == pygame.K_UP:
                         self.my_chess_ui.scroll_offset -= 20  # Scroll up
+                    elif event.key == pygame.K_ESCAPE:
+                        running = False
+                        self.training_environment.stop_ai = True  # Stop any AI-related processes
+                        if hasattr(self, 'play_against_ai_thread') and self.play_against_ai_thread.is_alive():
+                            self.play_against_ai_thread.join()  # Wait for the thread to finish
+                        if hasattr(self, 'training_thread') and self.training_thread.is_alive():
+                            self.training_thread.join()  # Wait for the thread to finish
+                        pygame.quit()  # Quit pygame
+                        import sys
+                        sys.exit()  # Exit the program
 
             if self.my_chess_board.draw_ai_moves:
                 self.screen.fill(WHITE)
@@ -167,6 +177,8 @@ class ChessGame:
                 self.my_chess_ui.draw_move_tracking_ui()
                 pygame.display.flip()
                 self.my_chess_board.draw_ai_moves = False
+
+            # self.training_environment.process_updates()
 
             # Redraw the game state
             self.screen.fill(WHITE)

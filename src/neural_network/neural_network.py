@@ -6,11 +6,13 @@ import torch.nn.functional as F
 class NeuralNetwork(nn.Module):
     def __init__(self, action_size):
         super(NeuralNetwork, self).__init__()
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)  # Assuming 1 input channel, adjust as necessary
+        # Adjust the number of input channels to match your board representation
+        self.conv1 = nn.Conv2d(14, 16, kernel_size=3, stride=1, padding=1)
+        # The rest of your network definition remains the same
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
-        self.fc1 = nn.Linear(32 * 8 * 8, 128)  # Adjust size according to your state representation
+        self.fc1 = nn.Linear(32 * 8 * 8, 128)  # This might need adjustment based on the output of your conv layers
         self.fc2 = nn.Linear(128, 64)
-        self.out = nn.Linear(64, action_size)  # action_size should match the number of actions
+        self.out = nn.Linear(64, action_size)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
