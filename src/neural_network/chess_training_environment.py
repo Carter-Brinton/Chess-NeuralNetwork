@@ -56,10 +56,9 @@ class ChessTrainingEnvironment:
    
     def start_training_ai(self):
         episode = 1
-        while not self.ai_training_finished and episode <= MAX_EPISODES:
-            if self.stop_ai:
-                self.stop_ai = False
-                break
+        while not self.ai_training_finished and episode <= MAX_EPISODES and not self.stop_ai:
+            self.stop_ai = False
+            
             self.board.reset()
             state = self.board_to_tensor(self.board)
             self.move_counter = 0
@@ -67,10 +66,7 @@ class ChessTrainingEnvironment:
             total_reward_black = 0
             episode_loss = 0
 
-            while not self.board.is_game_over():
-                if self.stop_ai:
-                    self.stop_ai = False
-                    break
+            while not self.board.is_game_over() and not self.stop_ai:
                 current_agent = self.white_agent if self.board.turn == chess.WHITE else self.black_agent
                 move, action = self.get_nn_move(current_agent)
                 if move:
@@ -109,6 +105,7 @@ class ChessTrainingEnvironment:
             episode += 1
             if episode > MAX_EPISODES:
                 self.ai_training_finished = True
+
 
     def process_updates(self):
         try:
