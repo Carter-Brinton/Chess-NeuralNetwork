@@ -22,3 +22,20 @@ class NeuralNetwork(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.out(x)
         return x
+
+class ChessNN(nn.Module):
+    def __init__(self):
+        super(ChessNN, self).__init__()
+        self.conv1 = nn.Conv2d(12, 24, kernel_size=3, padding=1)  # 12 channels for each piece type
+        self.conv2 = nn.Conv2d(24, 48, kernel_size=3, padding=1)
+        self.fc1 = nn.Linear(48 * 8 * 8, 256)
+        self.fc2 = nn.Linear(256, 64 * 64)
+
+    def forward(self, x):
+        x = x.view(-1, 12, 8, 8)  # Reshape to match the convolutional layer input
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = x.view(-1, 48 * 8 * 8)  # Flatten
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
